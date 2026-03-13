@@ -10,31 +10,33 @@ spec:
   generators:
   - matrix:
       generators:
-      - git:
-          requeueAfterSeconds: 10
-          repoURL: https://github.com/johnvox/sandbox
-          revision: argocd
-          directories:
-          - path: charts/*
-          - path: charts/*.disabled
-            exclude: true
-          pathParamPrefix: chart
+      # - git:
+      #     requeueAfterSeconds: 10
+      #     repoURL: https://github.com/johnvox/sandbox
+      #     revision: argocd
+      #     directories:
+      #     - path: charts/*
+      #     - path: charts/*.disabled
+      #       exclude: true
+      #     pathParamPrefix: chart
+      - list:
+          elements:
+          - chart.path.basename: argocd
       - merge:
           mergeKeys:
-          - path.basename
+          - kind
           generators:
-          - git:
-              requeueAfterSeconds: 10
-              repoURL: https://github.com/johnvox/sandbox 
-              revision: argocd
-              files:
-              - path: .argocd.yaml
+          - list:
+              elements:
+              - kind: argocd-override
           - git:
               requeueAfterSeconds: 10
               repoURL: https://github.com/johnvox/sandbox 
               revision: argocd
               files:
               - path: apps/*/.argocd.yaml
+              values:
+                kind: argocd-override
   templatePatch: |
     {{- $app := . | dig (.chart.path.basename) (dict) -}}
     metadata:
