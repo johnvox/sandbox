@@ -1,2 +1,3 @@
+kind: argocd-override
 response-server:
   namespace: response-server
