@@ -1,0 +1,55 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: coucou
+  namespace: srm-backbone
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:      
+  - git:
+      repoURL: https://github.com/johnvox/sandbox
+      revision: argocd
+      directories:
+      - path: charts/*
+      - path: charts/*.disabled
+        exclude: true
+  templatePatch: |
+    {{- $app := . | dig (.chart.path.basename) (dict) -}}
+    metadata:
+      labels:
+        test: {{ . | toJson | b64enc }}
+        {{ $app | dig "labels" (dict) | toJson }}
+      annotations:
+        {{ $app | dig "annotations" (dict) | toJson }}
+    spec:
+      info:
+        {{ $app | dig "spec" "info" (list) | toJson }}
+      syncPolicy:
+        {{ $app | dig "spec" "syncPolicy" (dict) | toJson }}
+      ignoreDifferences:
+        {{ $app | dig "spec" "ignoreDifferences" (list) | toJson }}
+  template:
+    metadata:
+      name: 'coucou-{{.chart.path.basename}}'
+      annotations:
+        monitoring/disable-alerting: "true"
+    spec:
+      project: default
+      sources:
+      - repoURL: https://github.com/johnvox/sandbox
+        targetRevision: argocd
+        path: '{{ .chart.path }}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .chart.yolo }}'
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+        - ServerSideApply=false
+        managedNamespaceMetadata:
+          labels:        
+            policy/replace-registry: "true"
+            ca.bundle/inject: "true"
+          annotations: {}
