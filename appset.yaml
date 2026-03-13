@@ -8,27 +8,22 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-  - matrix:
+  - merge:
+      mergeKeys:
+      - chart
       generators:
-      # - git:
-      #     requeueAfterSeconds: 10
-      #     repoURL: https://github.com/johnvox/sandbox
-      #     revision: argocd
-      #     directories:
-      #     - path: charts/*
-      #     - path: charts/*.disabled
-      #       exclude: true
-      #     pathParamPrefix: chart
-      - list:
-          elements:
-          - chart.path.basename: argocd
-      - merge:
-          mergeKeys:
-          - kind
+      - git:
+          requeueAfterSeconds: 10
+          repoURL: https://github.com/johnvox/sandbox
+          revision: argocd
+          directories:
+          - path: charts/*
+          - path: charts/*.disabled
+            exclude: true
+          values:
+            chart: '{{index .path.segments 1}}'
+      - matrix:
           generators:
-          - list:
-              elements:
-              - kind: argocd-override
           - git:
               requeueAfterSeconds: 10
               repoURL: https://github.com/johnvox/sandbox 
@@ -36,7 +31,13 @@ spec:
               files:
               - path: apps/*/.argocd.yaml
               values:
-                kind: argocd-override
+                chart: '{{index .path.segments 1}}'
+          - git:
+              requeueAfterSeconds: 10
+              repoURL: https://github.com/johnvox/sandbox 
+              revision: argocd
+              files:
+              - path: .argocd.yaml
   templatePatch: |
     {{- $app := . | dig (.chart.path.basename) (dict) -}}
     metadata:
@@ -54,7 +55,7 @@ spec:
   #       {{ $app | dig "spec" "ignoreDifferences" (list) | toJson }}
   template:
     metadata:
-      name: 'coucou-{{.chart.path.basename}}'
+      name: 'coucou-{{.chart.path.basename }}'
       annotations:
         monitoring/disable-alerting: "true"
     spec:
@@ -62,7 +63,7 @@ spec:
       sources:
       - repoURL: https://github.com/johnvox/sandbox
         targetRevision: argocd
-        path: '{{ .chart.path.path }}'
+        path: '{{.chart.path.path}}'
       destination:
         server: https://kubernetes.default.svc
         namespace: 'default'

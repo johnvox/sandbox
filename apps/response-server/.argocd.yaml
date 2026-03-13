@@ -1,3 +1,2 @@
-kind: argocd-override
-response-server:
-  namespace: response-server
+argo:
+  namespace: request-server
