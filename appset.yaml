@@ -19,12 +19,22 @@ spec:
           - path: charts/*.disabled
             exclude: true
           pathParamPrefix: chart
-      - git:
-          requeueAfterSeconds: 10
-          repoURL: https://github.com/johnvox/sandbox 
-          revision: argocd
-          files:
-          - path: apps/*/.argocd.yaml
+      - merge:
+          mergeKeys:
+          - path.basename
+          generators:
+          - git:
+              requeueAfterSeconds: 10
+              repoURL: https://github.com/johnvox/sandbox 
+              revision: argocd
+              files:
+              - path: .argocd.yaml
+          - git:
+              requeueAfterSeconds: 10
+              repoURL: https://github.com/johnvox/sandbox 
+              revision: argocd
+              files:
+              - path: apps/*/.argocd.yaml
   templatePatch: |
     {{- $app := . | dig (.chart.path.basename) (dict) -}}
     metadata:
