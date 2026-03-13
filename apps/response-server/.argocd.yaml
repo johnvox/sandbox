@@ -1,2 +1,2 @@
-argocd:
+response-server:
   namespace: response-server
